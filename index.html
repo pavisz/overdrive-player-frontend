@@ -26,6 +26,33 @@
             max-width: 900px;
         }
         video { width: 100%; border-radius: 5px; outline: none; background: black; }
+        
+        .custom-url-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .custom-url-box input {
+            flex-grow: 1;
+            background: #11131e;
+            color: white;
+            border: 1px solid #00ffcc;
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+        .custom-url-box button {
+            background: #00ffcc;
+            color: black;
+            border: none;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .custom-url-box button:hover { background: #00cca3; }
+
         .controls {
             margin-top: 15px;
             display: flex;
@@ -33,7 +60,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-        select, button {
+        select, button.tool-btn {
             background: #1f2336;
             color: white;
             border: 1px solid #00ffcc;
@@ -42,8 +69,8 @@
             cursor: pointer;
             font-weight: bold;
         }
-        button { background: #e91e63; border: none; }
-        button:hover { background: #ff4081; }
+        button.tool-btn { background: #e91e63; border: none; }
+        button.tool-btn:hover { background: #ff4081; }
         #toast {
             display: none;
             position: fixed;
@@ -65,10 +92,14 @@
             <source id="vidsrc" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
         </video>
 
+        <div class="custom-url-box">
+            <input type="text" id="customUrl" placeholder="Paste direct .mp4 or stream link here...">
+            <button id="loadUrlBtn">Load Link</button>
+        </div>
+
         <div class="controls">
             <select id="quality">
-                <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">1080p Quality</option>
-                <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4">720p Quality</option>
+                <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">Default 1080p</option>
             </select>
 
             <select id="speed">
@@ -77,7 +108,7 @@
                 <option value="3.0">3.0x Max Overdrive</option>
             </select>
 
-            <button id="snapBtn">📸 Take Screenshot & Send</button>
+            <button class="tool-btn" id="snapBtn">📸 Take Screenshot & Send</button>
         </div>
     </div>
 
@@ -88,10 +119,30 @@
 
         const vid = document.getElementById('vid');
         const vidsrc = document.getElementById('vidsrc');
+        const customUrl = document.getElementById('customUrl');
+        const loadUrlBtn = document.getElementById('loadUrlBtn');
         const quality = document.getElementById('quality');
         const speed = document.getElementById('speed');
         const snapBtn = document.getElementById('snapBtn');
         const toast = document.getElementById('toast');
+
+        // Custom URL Loader Engine
+        loadUrlBtn.addEventListener('click', () => {
+            const newUrl = customUrl.value.trim();
+            if (!newUrl) {
+                alert("Please paste a link first!");
+                return;
+            }
+            
+            // Add the new link to the dropdown visually and switch to it
+            const newOption = new Option("Custom Loaded Stream", newUrl, true, true);
+            quality.add(newOption);
+            
+            // Load and play the new video
+            vidsrc.src = newUrl;
+            vid.load();
+            vid.play().catch(e => alert("Could not play this link. Ensure it is a direct video file (like .mp4) and allows cross-origin streaming."));
+        });
 
         // Quality Switcher
         quality.addEventListener('change', () => {
