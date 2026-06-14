@@ -3,185 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overdrive Player</title>
+    <title>Overdrive Player Pro</title>
     <style>
-        body {
-            background-color: #0a0b10;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        h1 { color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
-        .player-box {
-            background: #141622;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            width: 80%;
-            max-width: 900px;
-        }
-        video { width: 100%; border-radius: 5px; outline: none; background: black; }
+        :root { --neon: #00ffcc; --bg: #0a0b10; --card: #141622; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         
-        .custom-url-box {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            width: 100%;
-        }
-        .custom-url-box input {
-            flex-grow: 1;
-            background: #11131e;
-            color: white;
-            border: 1px solid #00ffcc;
-            padding: 10px;
-            border-radius: 5px;
-            outline: none;
-        }
-        .custom-url-box button {
-            background: #00ffcc;
-            color: black;
-            border: none;
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .custom-url-box button:hover { background: #00cca3; }
+        .container { width: 100%; max-width: 900px; }
+        h1 { color: var(--neon); text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .player-card { background: var(--card); padding: 15px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d3e; }
+        
+        /* The Video Tag */
+        video { width: 100%; border-radius: 10px; background: black; cursor: pointer; }
 
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        select, button.tool-btn {
-            background: #1f2336;
-            color: white;
-            border: 1px solid #00ffcc;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button.tool-btn { background: #e91e63; border: none; }
-        button.tool-btn:hover { background: #ff4081; }
-        #toast {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            background: #00ffcc;
-            color: black;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+        /* Controls */
+        .controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+        input, select, button { background: #1c1f2e; color: white; border: 1px solid #333; padding: 12px; border-radius: 8px; outline: none; }
+        input:focus { border-color: var(--neon); }
+        
+        button { background: var(--neon); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; border: none; }
+        button:hover { filter: brightness(1.2); }
+        
+        .btn-snap { background: #e91e63; color: white; grid-column: span 3; }
     </style>
 </head>
 <body>
 
-    <h1>OVERDRIVE PLAYER</h1>
-    
-    <div class="player-box">
-        <video id="vid" crossorigin="anonymous" controls>
-            <source id="vidsrc" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
-        </video>
+    <div class="container">
+        <h1>Overdrive Player</h1>
+        
+        <div class="player-card">
+            <video id="vid" crossorigin="anonymous" controls playsinline>
+                <source id="vidsrc" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+            </video>
 
-        <div class="custom-url-box">
-            <input type="text" id="customUrl" placeholder="Paste direct .mp4 or stream link here...">
-            <button id="loadUrlBtn">Load Link</button>
-        </div>
-
-        <div class="controls">
-            <select id="quality">
-                <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">Default 1080p</option>
-            </select>
-
-            <select id="speed">
-                <option value="1.0">1.0x Speed</option>
-                <option value="2.0">2.0x Fast</option>
-                <option value="3.0">3.0x Max Overdrive</option>
-            </select>
-
-            <button class="tool-btn" id="snapBtn">📸 Take Screenshot & Send</button>
+            <div class="controls">
+                <input type="text" id="customUrl" placeholder="Paste .mp4 stream link here...">
+                <button id="loadBtn">Load</button>
+                <select id="speed">
+                    <option value="1.0">1.0x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2.0">2.0x</option>
+                </select>
+                <button class="btn-snap" id="snapBtn">📸 Take Screenshot & Send</button>
+            </div>
         </div>
     </div>
 
-    <div id="toast">Screenshot Sent!</div>
-
     <script>
-        const HF_SPACE_URL = "https://pavisz-overdrive-player-backend.hf.space";
-
+        const HF_SPACE_URL = "https://pavisz-overdrive-server.hf.space";
         const vid = document.getElementById('vid');
         const vidsrc = document.getElementById('vidsrc');
-        const customUrl = document.getElementById('customUrl');
-        const loadUrlBtn = document.getElementById('loadUrlBtn');
-        const quality = document.getElementById('quality');
-        const speed = document.getElementById('speed');
-        const snapBtn = document.getElementById('snapBtn');
-        const toast = document.getElementById('toast');
 
-        // Custom URL Loader Engine
-        loadUrlBtn.addEventListener('click', () => {
-            const newUrl = customUrl.value.trim();
-            if (!newUrl) {
-                alert("Please paste a link first!");
-                return;
+        // Load Custom Link
+        document.getElementById('loadBtn').onclick = () => {
+            const url = document.getElementById('customUrl').value;
+            if(url) {
+                vidsrc.src = url;
+                vid.load();
+                vid.play();
             }
-            
-            // Add the new link to the dropdown visually and switch to it
-            const newOption = new Option("Custom Loaded Stream", newUrl, true, true);
-            quality.add(newOption);
-            
-            // Load and play the new video
-            vidsrc.src = newUrl;
-            vid.load();
-            vid.play().catch(e => alert("Could not play this link. Ensure it is a direct video file (like .mp4) and allows cross-origin streaming."));
-        });
-
-        // Quality Switcher
-        quality.addEventListener('change', () => {
-            const time = vid.currentTime;
-            vidsrc.src = quality.value;
-            vid.load();
-            vid.currentTime = time;
-            vid.play();
-        });
-
-        // Speed Switcher
-        speed.addEventListener('change', () => {
-            vid.playbackRate = parseFloat(speed.value);
-        });
+        };
 
         // Screenshot Engine
-        snapBtn.addEventListener('click', async () => {
-            snapBtn.innerText = "Sending...";
+        document.getElementById('snapBtn').onclick = async () => {
+            const btn = document.getElementById('snapBtn');
+            btn.innerText = "Processing...";
             
             const canvas = document.createElement('canvas');
             canvas.width = vid.videoWidth;
             canvas.height = vid.videoHeight;
-            canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(vid, 0, 0);
             
             canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('file', blob, 'snap.png');
-                formData.append('timestamp', Math.floor(vid.currentTime) + "s");
-
+                const fd = new FormData();
+                fd.append('file', blob, 'snap.png');
+                fd.append('timestamp', Math.floor(vid.currentTime) + "s");
+                
                 try {
-                    await fetch(`${HF_SPACE_URL}/upload-screenshot`, { method: 'POST', body: formData });
-                    toast.style.display = 'block';
-                    setTimeout(() => toast.style.display = 'none', 3000);
-                } catch (e) {
-                    alert("Error sending screenshot. Check Hugging Face backend.");
-                }
-                snapBtn.innerText = "📸 Take Screenshot & Send";
-            }, 'image/png');
-        });
+                    await fetch(`${HF_SPACE_URL}/upload-screenshot`, { method: 'POST', body: fd });
+                    alert("Sent!");
+                } catch(e) { alert("Error: Check CORS/Server"); }
+                btn.innerText = "📸 Take Screenshot & Send";
+            });
+        };
+
+        // Speed
+        document.getElementById('speed').onchange = (e) => vid.playbackRate = e.target.value;
     </script>
 </body>
 </html>
